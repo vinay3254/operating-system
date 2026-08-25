@@ -1,0 +1,17 @@
+[package]
+name = "disk-image"
+version = "0.1.0"
+edition = "2021"
+
+# This crate runs on the HOST machine (Windows/Linux/Mac).
+# It takes the compiled kernel ELF binary, wraps it in a BIOS-bootable
+# disk image using the bootloader crate, then launches QEMU.
+
+[[bin]]
+name = "disk-image"
+path = "src/main.rs"
+
+[dependencies]
+# Host-side bootloader builder. Knows how to stitch together:
+#   BIOS boot sector + second-stage loader + kernel ELF → raw disk image
+bootloader = { version = "0.11", features = ["bios"], default-features = false }
