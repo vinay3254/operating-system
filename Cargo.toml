@@ -1,0 +1,13 @@
+[workspace]
+members = ["kernel", "disk-image"]
+resolver = "2"
+
+# Panic strategy must be set at the workspace root —
+# profiles in member crates (kernel/Cargo.toml) are silently ignored by Cargo.
+# "abort" instead of "unwind" because we have no unwinding runtime in a bare-metal kernel.
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+opt-level = 3
