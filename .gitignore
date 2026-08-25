@@ -1,0 +1,9 @@
+target/
+**/target/
+Cargo.lock
+*.img
+*.bin
+*.bios
+*.uefi
+.vscode/
+.idea/
