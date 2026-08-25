@@ -1,0 +1,14 @@
+# Workspace-level Cargo config — applies to ALL workspace members.
+#
+# IMPORTANT: We do NOT set [build] target here. The kernel-specific target
+# (x86_64-kernel.json) lives in kernel/.cargo/config.toml so it only applies
+# when building the kernel crate, not disk-image (which builds for the host).
+#
+# Similarly, build-std is kernel-only and lives in kernel/.cargo/config.toml.
+
+[unstable]
+# Required by recent nightly: any workspace member (or transitive dependency)
+# that builds for a .json target needs this flag.
+# The bootloader crate used by disk-image compiles BIOS boot code internally
+# using our x86_64-kernel.json target, so this must be set workspace-wide.
+json-target-spec = true
