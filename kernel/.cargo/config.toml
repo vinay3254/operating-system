@@ -1,0 +1,29 @@
+# This config applies ONLY when building the kernel crate from this directory.
+# It does NOT affect the disk-image crate (which lives in ../disk-image/).
+
+[build]
+# Default target: our freestanding x86_64 kernel target spec.
+# Without this you'd need --target x86_64-kernel.json on every cargo invocation.
+target = "../x86_64-kernel.json"
+
+[unstable]
+# Rebuild core and compiler_builtins from source for our custom target.
+# Required because no precompiled std exists for "x86_64-kernel" —
+# it's not a recognized Rust target triple.
+#
+# compiler-builtins-mem gives us memset/memcpy/memmove — the compiler
+# emits calls to these even in no_std code (e.g., struct copies),
+# but they're not available without an OS. The feature compiles them in.
+build-std = ["core", "compiler_builtins", "alloc"]
+build-std-features = ["compiler-builtins-mem"]
+
+# Required by recent nightly: using a .json custom target spec file
+# now requires this -Z flag to be explicitly opted in.
+json-target-spec = true
+
+
+# Custom runner: when you do `cargo run` in the kernel/ directory,
+# Cargo will pass the compiled kernel ELF to this command.
+# The disk-image binary then wraps it in a bootable disk image and launches QEMU.
+[target.'cfg(target_os = "none")']
+runner = ["cargo", "run", "--manifest-path", "../disk-image/Cargo.toml", "--"]
