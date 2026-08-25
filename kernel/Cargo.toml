@@ -1,0 +1,61 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "kernel"
+path = "src/main.rs"
+
+[dependencies]
+# bootloader_api: the kernel-side half of the bootloader 0.11 interface.
+# Provides the entry_point! macro, BootInfo struct, FrameBuffer, MemoryRegions, etc.
+# The bootloader crate itself (disk-image/Cargo.toml) is the HOST-side builder.
+bootloader_api = "0.11"
+
+# x86_64 architecture abstractions: GDT, IDT, page tables, registers, MSRs, port I/O.
+# 0.15+ implements the new Step trait (forward_overflowing/backward_overflowing)
+# required by recent nightly. 0.14 fails to compile against current nightly.
+x86_64 = "0.15"
+
+# Spinlock Mutex for no_std. Busy-waits until the lock is free.
+# Used everywhere we need mutual exclusion without OS primitives.
+spin = "0.9"
+
+# Safe static initialization for no_std (powered by spin internally).
+lazy_static = { version = "1.0", features = ["spin_no_std"] }
+
+# 8259 Programmable Interrupt Controller driver.
+# Controls hardware IRQs: timer (IRQ0), keyboard (IRQ1), etc.
+pic8259 = "0.10"
+
+# PS/2 keyboard scancode decoder (scan set 1, US 104-key layout).
+pc-keyboard = "0.7"
+
+# No-std compatible linked-list heap allocator.
+# We'll use the simpler bump allocator first (implemented inline),
+# but this crate is available if we want to upgrade later.
+linked_list_allocator = "0.10"
+
+# Lock-free MPSC queue — used to pass keyboard scancodes from the
+# interrupt handler (producer) to the async keyboard task (consumer).
+# Must be alloc-only (no std) since we're in a kernel.
+crossbeam-queue = { version = "0.3", default-features = false, features = ["alloc"] }
+
+# Bitmap font for rendering characters to the pixel framebuffer.
+# Provides pre-rasterized glyphs at multiple sizes (8..32px).
+# No std, no alloc — pure const data.
+noto-sans-mono-bitmap = { version = "0.3", default-features = false, features = [
+    "regular",          # Regular weight (not bold)
+    "size_16",          # 16px tall glyphs — readable at typical QEMU resolutions
+] }
+
+# One-shot lazy cell for no_std — used to initialize the scancode queue exactly once.
+# `lazy_static` can't do this because the queue needs a heap allocation (not const-init).
+conquer-once = { version = "0.4", default-features = false }
+
+# Async utilities: AtomicWaker (interrupt-safe waker storage) + StreamExt (next().await).
+# alloc feature required for Stream/Future combinators.
+futures-util = { version = "0.3", default-features = false, features = ["alloc"] }
+
+
